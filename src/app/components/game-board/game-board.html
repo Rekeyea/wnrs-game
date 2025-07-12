@@ -1,0 +1,227 @@
+<div class="game-container">
+  @if (gameState) {
+    <!-- Game Header -->
+    <div class="game-header">
+      <mat-card class="level-info-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="level-icon">layers</mat-icon>
+            Nivel {{ gameState.currentLevel }}: {{ getCurrentLevelName() }}
+          </mat-card-title>
+          <mat-card-subtitle>{{ getCurrentLevelDescription() }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="level-stats">
+            <mat-chip-set>
+              <mat-chip>Cartas restantes: {{ getRemainingCards() }}</mat-chip>
+              <mat-chip>Ronda: {{ gameState.roundNumber }}</mat-chip>
+            </mat-chip-set>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Players Section -->
+    <div class="players-section">
+      <mat-card class="players-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>groups</mat-icon>
+            Jugadores
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="players-grid">
+            @for (player of players$ | async; track player.id) {
+              <div class="player-item" [class.active-player]="player.isActive">
+                <div class="player-info">
+                  <div class="player-name">
+                    @if (player.isActive) {
+                      <mat-icon class="active-icon">person</mat-icon>
+                    }
+                    {{ player.name }}
+                    @if (canPlayerAdvance(player)) {
+                      <mat-icon class="ready-icon" color="primary">check_circle</mat-icon>
+                    }
+                  </div>
+                  <div class="player-stats">
+                    <span class="points">{{ player.points }} pts</span>
+                    <span class="cards">{{ player.cardsAnswered }} cartas</span>
+                  </div>
+                </div>
+                <div class="progress-section">
+                  <mat-progress-bar 
+                    mode="determinate" 
+                    [value]="getPlayerProgress(player)"
+                    [color]="canPlayerAdvance(player) ? 'primary' : 'accent'">
+                  </mat-progress-bar>
+                  <small class="progress-text">
+                    {{ player.points }}/{{ gameConfig.POINTS_TO_ADVANCE }} para avanzar
+                  </small>
+                </div>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Current Turn Section -->
+    @if (currentPlayer) {
+      <div class="current-turn-section">
+        <mat-card class="turn-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>schedule</mat-icon>
+              Turno de {{ currentPlayer.name }}
+            </mat-card-title>
+            <mat-card-subtitle>
+              @if (isGameInProgress() && !hasCurrentCard()) {
+                Es tu momento de sacar una carta
+              } @else if (hasCurrentCard()) {
+                Responde la pregunta o pásala
+              }
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            @if (!hasCurrentCard() && isGameInProgress()) {
+              <div class="draw-card-section">
+                <button 
+                  mat-raised-button 
+                  color="primary" 
+                  (click)="drawCard()"
+                  class="draw-card-btn">
+                  <mat-icon>style</mat-icon>
+                  Sacar Carta
+                </button>
+              </div>
+            }
+
+            @if (hasCurrentCard()) {
+              <div class="current-card-section">
+                <mat-card class="question-card">
+                  <mat-card-content>
+                    <div class="question-text">
+                      <mat-icon class="question-icon">help_outline</mat-icon>
+                      {{ currentCard?.question }}
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+
+                <div class="card-actions">
+                  <button 
+                    mat-raised-button 
+                    color="primary" 
+                    (click)="answerCard()"
+                    class="answer-btn">
+                    <mat-icon>check</mat-icon>
+                    Responder (+1 punto)
+                  </button>
+                  
+                  <button 
+                    mat-stroked-button 
+                    color="warn" 
+                    (click)="skipCard()"
+                    class="skip-btn">
+                    <mat-icon>skip_next</mat-icon>
+                    Pasar
+                  </button>
+                </div>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
+
+    <!-- Game Controls -->
+    <div class="game-controls">
+      <mat-card class="controls-card">
+        <mat-card-content>
+          <div class="controls-actions">
+            @if (isGameInProgress()) {
+              <button 
+                mat-stroked-button 
+                color="accent" 
+                (click)="pauseGame()">
+                <mat-icon>pause</mat-icon>
+                Pausar
+              </button>
+            }
+            
+            <button 
+              mat-stroked-button 
+              color="warn">
+              <mat-icon>refresh</mat-icon>
+              Reiniciar
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Level Complete State -->
+    @if (isLevelComplete()) {
+      <div class="level-complete-overlay">
+        <mat-card class="level-complete-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon color="primary">celebration</mat-icon>
+              ¡Nivel Completado!
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p>Todos los jugadores han alcanzado los puntos necesarios.</p>
+            <p>Avanzando al siguiente nivel...</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
+
+    <!-- Game Over State -->
+    @if (isGameOver()) {
+      <div class="game-over-overlay">
+        <mat-card class="game-over-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon color="primary">emoji_events</mat-icon>
+              ¡Juego Completado!
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p>¡Felicitaciones! Han completado todos los niveles de "We're Not Really Strangers".</p>
+            <div class="final-stats">
+              @if (getGameStats()) {
+                <div class="stat-item">
+                  <strong>Tiempo total:</strong> 
+                  {{ (getGameStats()?.gameTime || 0) / 60000 | number:'1.0-0' }} minutos
+                </div>
+                <div class="stat-item">
+                  <strong>Cartas jugadas:</strong> {{ getGameStats()?.cardsPlayed }}
+                </div>
+              }
+            </div>
+            <div class="game-over-actions">
+              <button mat-raised-button color="primary">
+                <mat-icon>refresh</mat-icon>
+                Nuevo Juego
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
+  } @else {
+    <!-- Loading State -->
+    <div class="loading-state">
+      <mat-card>
+        <mat-card-content>
+          <div class="loading-content">
+            <mat-icon>hourglass_empty</mat-icon>
+            <p>Preparando el juego...</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</div>

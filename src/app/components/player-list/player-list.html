@@ -1,0 +1,229 @@
+<div class="player-list-container">
+  
+  <!-- Header Section -->
+  @if (showLevelInfo) {
+    <div class="list-header">
+      <mat-card class="header-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>groups</mat-icon>
+            Jugadores
+          </mat-card-title>
+          <mat-card-subtitle>
+            Nivel actual: {{ getCurrentLevelName() }}
+          </mat-card-subtitle>
+        </mat-card-header>
+      </mat-card>
+    </div>
+  }
+
+  <!-- Players List -->
+  <div class="players-container">
+    @for (player of players; track trackByPlayerId($index, player)) {
+      <mat-card 
+        [class]="getPlayerCardClass(player)"
+        [@playerHighlight]="getPlayerAnimation(player)"
+        [@slideIn]
+        [matTooltip]="getPlayerTooltip(player)"
+        (click)="onPlayerClick(player)">
+        
+        <!-- Player Header -->
+        <mat-card-header class="player-header">
+          <div class="player-avatar">
+            <mat-icon 
+              [color]="getPlayerStatusColor(player)"
+              [matBadge]="getPlayerRank(player)"
+              matBadgeColor="accent"
+              [matBadgeHidden]="players.length <= 1"
+              class="player-icon">
+              {{ getPlayerStatusIcon(player) }}
+            </mat-icon>
+          </div>
+          
+          <div class="player-info">
+            <mat-card-title class="player-name">
+              {{ player.name }}
+              @if (player.isActive) {
+                <mat-chip class="active-chip">
+                  <mat-icon matChipAvatar>schedule</mat-icon>
+                  Es tu turno
+                </mat-chip>
+              }
+              @if (isWinning(player)) {
+                <mat-chip color="accent" class="winning-chip">
+                  <mat-icon matChipAvatar>emoji_events</mat-icon>
+                  Líder
+                </mat-chip>
+              }
+            </mat-card-title>
+            
+            <mat-card-subtitle class="player-subtitle">
+              @if (showStats) {
+                <div class="player-stats-summary">
+                  <span class="stat-item">
+                    <mat-icon class="stat-icon">stars</mat-icon>
+                    {{ player.points }} puntos
+                  </span>
+                  <span class="stat-item">
+                    <mat-icon class="stat-icon">style</mat-icon>
+                    {{ player.cardsAnswered }} cartas
+                  </span>
+                  <span class="stat-item">
+                    <mat-icon class="stat-icon">layers</mat-icon>
+                    {{ formatPlayerLevel(player.currentLevel) }}
+                  </span>
+                </div>
+              }
+            </mat-card-subtitle>
+          </div>
+
+          <!-- Action Button -->
+          <div class="player-actions">
+            @if (showStats) {
+              <button 
+                mat-icon-button 
+                (click)="onViewStats(player, $event)"
+                matTooltip="Ver estadísticas detalladas">
+                <mat-icon>info</mat-icon>
+              </button>
+            }
+          </div>
+        </mat-card-header>
+
+        <!-- Progress Section -->
+        @if (showProgress) {
+          <mat-card-content class="progress-section">
+            <div class="progress-info">
+              <div class="progress-text">
+                <span class="progress-label">Progreso hacia siguiente nivel:</span>
+                <span class="progress-value">{{ player.points }}/{{ gameConfig.POINTS_TO_ADVANCE }}</span>
+              </div>
+              
+              @if (canPlayerAdvance(player)) {
+                <div class="ready-indicator">
+                  <mat-icon color="primary">check_circle</mat-icon>
+                  <span>¡Listo para avanzar!</span>
+                </div>
+              } @else {
+                <small class="progress-message">{{ getProgressMessage(player) }}</small>
+              }
+            </div>
+            
+            <mat-progress-bar 
+              mode="determinate" 
+              [value]="getPlayerProgress(player)"
+              [color]="getPlayerProgressColor(player)"
+              class="player-progress-bar">
+            </mat-progress-bar>
+          </mat-card-content>
+        }
+
+        <!-- Detailed Stats (Compact Mode) -->
+        @if (compact && showStats) {
+          <mat-card-content class="compact-stats">
+            <div class="stat-grid">
+              <div class="stat-box">
+                <mat-icon>stars</mat-icon>
+                <div class="stat-details">
+                  <span class="stat-number">{{ player.points }}</span>
+                  <span class="stat-label">Puntos</span>
+                </div>
+              </div>
+              
+              <div class="stat-box">
+                <mat-icon>style</mat-icon>
+                <div class="stat-details">
+                  <span class="stat-number">{{ player.cardsAnswered }}</span>
+                  <span class="stat-label">Cartas</span>
+                </div>
+              </div>
+              
+              <div class="stat-box">
+                <mat-icon>trending_up</mat-icon>
+                <div class="stat-details">
+                  <span class="stat-number">#{{ getPlayerRank(player) }}</span>
+                  <span class="stat-label">Posición</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        }
+
+        <!-- Status Indicators -->
+        <div class="status-indicators">
+          @if (canPlayerAdvance(player)) {
+            <div class="status-badge ready">
+              <mat-icon>check_circle</mat-icon>
+              Listo
+            </div>
+          }
+          
+          @if (player.isActive) {
+            <div class="status-badge active">
+              <mat-icon>play_circle_filled</mat-icon>
+              Turno actual
+            </div>
+          }
+          
+          @if (isWinning(player)) {
+            <div class="status-badge winning">
+              <mat-icon>emoji_events</mat-icon>
+              Líder
+            </div>
+          }
+        </div>
+      </mat-card>
+    } @empty {
+      <!-- Empty State -->
+      <mat-card class="empty-state">
+        <mat-card-content>
+          <div class="empty-content">
+            <mat-icon class="empty-icon">group_off</mat-icon>
+            <h3>No hay jugadores</h3>
+            <p>Agrega jugadores para comenzar la partida</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+
+  <!-- Summary Section -->
+  @if (players.length > 0 && showStats) {
+    <div class="summary-section">
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>assessment</mat-icon>
+            Resumen de la partida
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="summary-stats">
+            <div class="summary-item">
+              <span class="summary-label">Total de jugadores:</span>
+              <span class="summary-value">{{ players.length }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Jugadores listos para avanzar:</span>
+              <span class="summary-value">
+                {{ getPlayersReadyToAdvanceCount() }}
+              </span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Puntos totales acumulados:</span>
+              <span class="summary-value">
+                {{ getTotalPoints() }}
+              </span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Cartas respondidas en total:</span>
+              <span class="summary-value">
+                {{ getTotalCardsAnswered() }}
+              </span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</div>

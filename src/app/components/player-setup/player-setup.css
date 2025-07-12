@@ -1,0 +1,150 @@
+.setup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.setup-card {
+  width: 100%;
+  max-width: 600px;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.setup-card mat-card-header {
+  margin-bottom: 24px;
+}
+
+.setup-card mat-card-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.setup-card mat-card-subtitle {
+  font-size: 1rem;
+  color: #666;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.players-section h3 {
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.player-input-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.player-input {
+  flex: 1;
+}
+
+.remove-player-btn {
+  margin-top: 8px;
+}
+
+.add-player-btn {
+  align-self: flex-start;
+  margin-bottom: 20px;
+}
+
+.validation-info {
+  margin-bottom: 24px;
+}
+
+.warning, .info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.start-game-btn {
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  border-radius: 24px;
+  text-transform: none;
+}
+
+.start-game-btn:disabled {
+  opacity: 0.6;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .setup-container {
+    padding: 10px;
+  }
+
+  .setup-card {
+    padding: 16px;
+  }
+
+  .setup-card mat-card-title {
+    font-size: 1.5rem;
+  }
+
+  .player-input-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .remove-player-btn {
+    margin-top: 0;
+    align-self: flex-end;
+  }
+}
+
+/* Animation for adding/removing players */
+.player-input-row {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,327 @@
+<div class="game-over-container">
+  
+  <!-- Celebration Header -->
+  <div class="celebration-header" [@celebrationAnimation]>
+    <mat-card class="celebration-card">
+      <mat-card-header>
+        <div class="celebration-icon">
+          @if (hasMultipleWinners()) {
+            <mat-icon class="trophy-icon multiple">emoji_events</mat-icon>
+          } @else {
+            <mat-icon class="trophy-icon single">emoji_events</mat-icon>
+          }
+        </div>
+        <div class="celebration-content">
+          <mat-card-title class="celebration-title">
+            {{ getCompletionMessage() }}
+          </mat-card-title>
+          <mat-card-subtitle class="celebration-subtitle">
+            @if (winners.length > 0) {
+              @if (hasMultipleWinners()) {
+                ¡Empate entre {{ getWinnerNames() }}!
+              } @else {
+                ¡{{ winners[0].name }} es el ganador!
+              }
+            } @else {
+              ¡Todos han jugado increíble!
+            }
+          </mat-card-subtitle>
+        </div>
+      </mat-card-header>
+    </mat-card>
+  </div>
+
+  <!-- Winners Podium -->
+  @if (winners.length > 0) {
+    <div class="winners-section" [@slideInFromBottom]="{ value: '', params: { delay: 200 } }">
+      <mat-card class="winners-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>emoji_events</mat-icon>
+            @if (hasMultipleWinners()) {
+              Ganadores
+            } @else {
+              Ganador
+            }
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="podium">
+            @for (winner of winners; track winner.id) {
+              <div class="podium-position">
+                <div class="player-avatar winner">
+                  <mat-icon>person</mat-icon>
+                </div>
+                <div class="winner-info">
+                  <span class="winner-name">{{ winner.name }}</span>
+                  <span class="winner-points">{{ winner.points }} puntos</span>
+                  <span class="winner-cards">{{ winner.cardsAnswered }} cartas</span>
+                </div>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+
+  <!-- Game Statistics -->
+  <div class="stats-section" [@slideInFromBottom]="{ value: '', params: { delay: 400 } }">
+    <mat-card class="stats-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>assessment</mat-icon>
+          Estadísticas del Juego
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <mat-icon class="stat-icon">timer</mat-icon>
+            <div class="stat-details">
+              <span class="stat-value">{{ getGameDurationFormatted() }}</span>
+              <span class="stat-label">Duración total</span>
+            </div>
+          </div>
+          
+          <div class="stat-item">
+            <mat-icon class="stat-icon">groups</mat-icon>
+            <div class="stat-details">
+              <span class="stat-value">{{ players.length }}</span>
+              <span class="stat-label">Jugadores</span>
+            </div>
+          </div>
+          
+          <div class="stat-item">
+            <mat-icon class="stat-icon">style</mat-icon>
+            <div class="stat-details">
+              <span class="stat-value">{{ usedCards.length }}</span>
+              <span class="stat-label">Cartas jugadas</span>
+            </div>
+          </div>
+          
+          <div class="stat-item">
+            <mat-icon class="stat-icon">stars</mat-icon>
+            <div class="stat-details">
+              <span class="stat-value">{{ gameStats.totalPoints || 0 }}</span>
+              <span class="stat-label">Puntos totales</span>
+            </div>
+          </div>
+          
+          <div class="stat-item">
+            <mat-icon class="stat-icon">trending_up</mat-icon>
+            <div class="stat-details">
+              <span class="stat-value">{{ getAveragePointsPerPlayer() }}</span>
+              <span class="stat-label">Promedio por jugador</span>
+            </div>
+          </div>
+          
+          @if (getMostActivePlayer()) {
+            <div class="stat-item">
+              <mat-icon class="stat-icon">person_pin</mat-icon>
+              <div class="stat-details">
+                <span class="stat-value">{{ getMostActivePlayer()?.name }}</span>
+                <span class="stat-label">Más activo</span>
+              </div>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Player Rankings -->
+  <div class="rankings-section" [@slideInFromBottom]="{ value: '', params: { delay: 600 } }">
+    <mat-card class="rankings-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>leaderboard</mat-icon>
+          Clasificación Final
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-table [dataSource]="getSortedPlayers()" class="rankings-table">
+          <!-- Position Column -->
+          <ng-container matColumnDef="position">
+            <mat-header-cell *matHeaderCellDef> Pos. </mat-header-cell>
+            <mat-cell *matCellDef="let player; let i = index">
+              <div class="position-cell">
+                <span class="medal">{{ getPlayerMedal(i + 1) }}</span>
+                <span class="position-number">{{ i + 1 }}</span>
+              </div>
+            </mat-cell>
+          </ng-container>
+
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <mat-header-cell *matHeaderCellDef> Jugador </mat-header-cell>
+            <mat-cell *matCellDef="let player">
+              <div class="player-cell">
+                <mat-icon class="player-icon">person</mat-icon>
+                <span class="player-name">{{ player.name }}</span>
+                @if (isPlayerWinner(player)) {
+                  <mat-chip class="winner-chip">Ganador</mat-chip>
+                }
+              </div>
+            </mat-cell>
+          </ng-container>
+
+          <!-- Points Column -->
+          <ng-container matColumnDef="points">
+            <mat-header-cell *matHeaderCellDef> Puntos </mat-header-cell>
+            <mat-cell *matCellDef="let player">
+              <div class="points-cell">
+                <span class="points-value">{{ player.points }}</span>
+                <mat-icon class="points-icon">stars</mat-icon>
+              </div>
+            </mat-cell>
+          </ng-container>
+
+          <!-- Cards Column -->
+          <ng-container matColumnDef="cards">
+            <mat-header-cell *matHeaderCellDef> Cartas </mat-header-cell>
+            <mat-cell *matCellDef="let player">
+              <div class="cards-cell">
+                <span class="cards-value">{{ player.cardsAnswered }}</span>
+                <small class="efficiency">({{ getPlayerEfficiency(player) }}%)</small>
+              </div>
+            </mat-cell>
+          </ng-container>
+
+          <!-- Level Column -->
+          <ng-container matColumnDef="level">
+            <mat-header-cell *matHeaderCellDef> Nivel </mat-header-cell>
+            <mat-cell *matCellDef="let player">
+              <mat-chip class="level-chip">
+                {{ getLevelName(player.currentLevel) }}
+              </mat-chip>
+            </mat-cell>
+          </ng-container>
+
+          <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+          <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+        </mat-table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Detailed Statistics (Optional) -->
+  @if (showDetailedStats) {
+    <div class="detailed-stats-section" [@slideInFromBottom]="{ value: '', params: { delay: 800 } }">
+      <mat-card class="detailed-stats-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>analytics</mat-icon>
+            Estadísticas Detalladas
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="detailed-stats-grid">
+            <!-- Cards by Level -->
+            <div class="detail-section">
+              <h4>Cartas por Nivel</h4>
+              @for (level of [1, 2, 3]; track level) {
+                <div class="level-stat">
+                  <span class="level-name">{{ getLevelName(level) }}:</span>
+                  <span class="level-count">
+                    {{ (getCardsByLevel()[level] || []).length }} cartas
+                  </span>
+                </div>
+              }
+            </div>
+
+            <!-- Game Progress -->
+            <div class="detail-section">
+              <h4>Progreso del Juego</h4>
+              <div class="progress-stat">
+                <span>Nivel completado:</span>
+                <span>{{ getLevelName(gameState?.currentLevel || 1) }}</span>
+              </div>
+              <div class="progress-stat">
+                <span>Cartas restantes:</span>
+                <span>{{ 30 - usedCards.length }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+
+  <!-- Action Buttons -->
+  <div class="actions-section" [@fadeInScale]>
+    <mat-card class="actions-card">
+      <mat-card-content>
+        <div class="action-buttons">
+          <!-- Primary Actions -->
+          <div class="primary-actions">
+            <button 
+              mat-raised-button 
+              color="primary" 
+              (click)="onNewGame()"
+              class="action-btn primary">
+              <mat-icon>refresh</mat-icon>
+              Nuevo Juego
+            </button>
+            
+            <button 
+              mat-stroked-button 
+              color="accent" 
+              (click)="onBackToMenu()"
+              class="action-btn secondary">
+              <mat-icon>home</mat-icon>
+              Menú Principal
+            </button>
+          </div>
+
+          <!-- Secondary Actions -->
+          <div class="secondary-actions">
+            <button 
+              mat-icon-button 
+              (click)="onShareResults()"
+              matTooltip="Compartir resultados"
+              class="share-btn">
+              <mat-icon>share</mat-icon>
+            </button>
+            
+            <button 
+              mat-icon-button 
+              (click)="onViewHistory()"
+              matTooltip="Ver historial"
+              class="history-btn">
+              <mat-icon>history</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Share Text Preview -->
+        <div class="share-preview">
+          <small class="share-hint">
+            <mat-icon>info</mat-icon>
+            Comparte estos increíbles resultados con tus amigos
+          </small>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Thank You Message -->
+  <div class="thank-you-section" [@slideInFromBottom]="{ value: '', params: { delay: 1000 } }">
+    <mat-card class="thank-you-card">
+      <mat-card-content>
+        <div class="thank-you-content">
+          <mat-icon class="heart-icon">favorite</mat-icon>
+          <h3>¡Gracias por jugar!</h3>
+          <p>
+            Esperamos que hayan disfrutado conocerse mejor a través de 
+            "We're Not Really Strangers". Los momentos de conexión auténtica 
+            son los que realmente importan.
+          </p>
+          <small class="game-version">
+            Versión del juego: v1.0.0
+          </small>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

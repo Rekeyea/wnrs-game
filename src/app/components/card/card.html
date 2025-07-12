@@ -1,0 +1,149 @@
+<div class="card-container" [@slideIn] *ngIf="hasCard() && isVisible">
+  <mat-card class="question-card" [ngClass]="'level-' + card?.level" [@cardFlip]="cardState">
+    
+    <!-- Card Header -->
+    <mat-card-header class="card-header">
+      <div class="card-header-content">
+        <div class="level-info">
+          <mat-icon [color]="getLevelColor()" class="level-icon">{{ getLevelIcon() }}</mat-icon>
+          <div class="level-details">
+            <span class="level-name">Nivel {{ card?.level }}: {{ getLevelName() }}</span>
+            <small class="level-description">{{ getCardDescription() }}</small>
+          </div>
+        </div>
+        
+        <div class="card-meta">
+          <mat-chip-set>
+            <mat-chip [color]="getLevelColor()">
+              <mat-icon matChipAvatar>schedule</mat-icon>
+              {{ getEstimatedTime() }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </div>
+    </mat-card-header>
+
+    <!-- Card Content -->
+    <mat-card-content class="card-content">
+      @if (cardState === 'front') {
+        <!-- Front of card - Question -->
+        <div class="question-section" [@fadeInOut]>
+          <div class="question-icon-wrapper">
+            <mat-icon class="question-main-icon" [color]="getLevelColor()">help_outline</mat-icon>
+          </div>
+          
+          <div class="question-text">
+            <h2>{{ card?.question }}</h2>
+          </div>
+          
+          @if (currentPlayer) {
+            <div class="player-prompt">
+              <mat-icon>person</mat-icon>
+              <span>{{ getPlayerPrompt() }}</span>
+            </div>
+          }
+          
+          <div class="question-hints">
+            <p class="hint-text">
+              @if (isLevelCard(1)) {
+                Comparte tu primera impresión o intuición
+              } @else if (isLevelCard(2)) {
+                Tómate un momento para reflexionar y ser honesto
+              } @else if (isLevelCard(3)) {
+                Esta es una oportunidad para ser vulnerable y auténtico
+              }
+            </p>
+          </div>
+        </div>
+      } @else {
+        <!-- Back of card - Additional info -->
+        <div class="card-back" [@fadeInOut]>
+          <div class="back-content">
+            <mat-icon class="back-icon">info</mat-icon>
+            <h3>Información adicional</h3>
+            <p>Esta carta pertenece al nivel {{ getLevelName() }}.</p>
+            <p>{{ getCardDescription() }}</p>
+            <p><strong>Tiempo estimado:</strong> {{ getEstimatedTime() }}</p>
+          </div>
+        </div>
+      }
+    </mat-card-content>
+
+    <!-- Card Actions -->
+    @if (showActions && cardState === 'front') {
+      <mat-card-actions class="card-actions" [@fadeInOut]>
+        <div class="actions-container">
+          <!-- Primary Actions -->
+          <div class="primary-actions">
+            <button 
+              mat-raised-button 
+              [color]="getLevelColor()"
+              [disabled]="!canAnswer"
+              (click)="onAnswerCard()"
+              class="answer-btn">
+              <mat-icon>check_circle</mat-icon>
+              Responder
+              <span class="points-indicator">+1 punto</span>
+            </button>
+            
+            <button 
+              mat-stroked-button 
+              color="warn"
+              [disabled]="!canSkip"
+              (click)="onSkipCard()"
+              class="skip-btn">
+              <mat-icon>skip_next</mat-icon>
+              Pasar pregunta
+            </button>
+          </div>
+          
+          <!-- Secondary Actions -->
+          <div class="secondary-actions">
+            <button 
+              mat-icon-button 
+              (click)="flipCard()"
+              class="flip-btn"
+              matTooltip="Ver información adicional">
+              <mat-icon>flip</mat-icon>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Action Hints -->
+        <div class="action-hints">
+          <small class="hint">
+            💡 Responder suma puntos para avanzar al siguiente nivel
+          </small>
+        </div>
+      </mat-card-actions>
+    }
+    
+    @if (cardState === 'back') {
+      <mat-card-actions class="card-actions">
+        <button 
+          mat-stroked-button 
+          color="primary"
+          (click)="flipCard()"
+          class="flip-back-btn">
+          <mat-icon>flip_to_front</mat-icon>
+          Volver a la pregunta
+        </button>
+      </mat-card-actions>
+    }
+  </mat-card>
+</div>
+
+<!-- Empty state -->
+@if (!hasCard()) {
+  <div class="empty-card-state">
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <div class="empty-content">
+          <mat-icon class="empty-icon">style</mat-icon>
+          <h3>No hay carta seleccionada</h3>
+          <p>Presiona "Sacar Carta" para comenzar tu turno</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+}
